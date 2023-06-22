@@ -25,11 +25,14 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-
+from dotenv import load_dotenv
 
 #baseDir = u'G:\Otros ordenadores\Mi PC\Plan De Backend\Atenea'
 #datosDll = r'C:\Users\O002141\Documents\ATENEA\datos.dll'
 datosDll = r'datos.dll'
+
+# Cargar las variables de entorno del archivo .env
+load_dotenv()
 
 def ejecucion():
         today = date.today()
@@ -253,12 +256,17 @@ def loadStatusExecution(date_ini, date_fin, status):
             print("The SQL connection is closed")
 
 def leerArchivoDll():
-    with open(datosDll) as archivoPlano:
+    
+    """ with open(datosDll) as archivoPlano:
         user = archivoPlano.readline()
         psswrd = archivoPlano.readline()
         correo = archivoPlano.readline()
-        copssd = archivoPlano.readline()
-        return user, psswrd, correo, copssd
+        copssd = archivoPlano.readline()"""
+    user = os.getenv("usuario")
+    psswrd = os.getenv("usuario_ps")
+    correo = os.getenv("correo")
+    copssd = os.getenv("imap")
+    return user, psswrd, correo, copssd
 
 
 def main():
