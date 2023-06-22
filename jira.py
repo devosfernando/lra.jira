@@ -8,6 +8,7 @@ import Correo
 import pyperclip as clipboard
 import sqlite3
 import os.path
+import mysql.connector
 from datetime import date
 from decimal import Decimal
 from datetime import datetime
@@ -33,9 +34,10 @@ datosDll = r'datos.dll'
 def ejecucion():
         today = date.today()
         hora_ini = datetime.now().time()
-        date_ini= str(today)+' '+str(hora_ini)
-        status='IN PROGRESS'
-        loadStatusExecution(date_ini, '', status)
+        #date_ini= str(today)+' '+str(hora_ini)
+        date_ini = time.strftime('%Y-%m-%d %H:%M:%S')
+        status = 'IN PROGRESS'
+        loadStatusExecution(str(date_ini), '', status)
         
         try:
             
@@ -108,9 +110,6 @@ def ejecucion():
             time.sleep(5)
 
             print("- Login BBVA")
-            f = open ('holamundo.txt','w')
-            f.write(driver.page_source)
-            f.close()  
             myInputname = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, 'username')))
             myInputname.send_keys(str(datos[0]).replace("\n",""))
 
@@ -150,110 +149,108 @@ def ejecucion():
                     mybtnEnviar = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, '_eventId_proceed')))
                     mybtnEnviar.click()
                 
-                    #mybtn = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, 'btn-important')))
-                    #mybtn.click()
-                    
                     print("- Click para confirmar cuenta")
-                    mybtnconf = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="view_container"]/div/div/div[2]/div/div[2]/div/div[1]/div/div/button')))
+                    mybtnconf = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.XPATH, '//*[@id="view_container"]/div/div/div[2]/div/div[2]/div/div[1]/div/div/button')))
                     mybtnconf.click()
-                    time.sleep(15)
-                    print("- _oauth2_proxy")
+                    time.sleep(20)
+                    print("-Obtener Cookie _oauth2_proxy")
                     cookie = driver.get_cookie("_oauth2_proxy")
                     print(cookie)
                     print("- Valor _oauth2_proxy")
                     print(cookie.get('value'))
                     value=cookie.get('value')
                     nameCookie='_oauth2_proxy'
-                    time.sleep(20)
+                    #time.sleep(20)
                     today = date.today()
                     hora_actual = datetime.now().time()
-                    print("hora_actual:",hora_actual)
-                    print(str(today))
-                    loadCookieToSqlite(nameCookie, value, str(today)+ ' ' +str(hora_actual))
-                    
+                    fecha_actual = time.strftime('%Y-%m-%d %H:%M:%S')
+                    print("fecha_actual:",fecha_actual)
+                    loadCookieToSqlite(nameCookie, value,str(fecha_actual))
                     
             else:
-                print("Error se relanzara")
-                hora_fin = datetime.now().time()
-                date_fin= str(today)+' '+str(hora_fin)
-                status='ERROR'
-                loadStatusExecution(date_ini, date_fin, status)
+                print("Error se relanzara no cargo correctamente la pagina")
+                status='ERROR PAGINA'
                 
             driver.close()
             driver.quit()
+            status='FINISHED'
+            print("Finaliza Correctamente")
             
         except:
-            hora_fin = datetime.now().time()
-            date_fin= str(today)+' '+str(hora_fin)
-            status='ERROR'
+            status='ERROR GENERAL'
+            print("Error generico")
+        finally:
+            #hora_fin = datetime.now().time()
+            #date_fin= str(today)+' '+str(hora_fin)
+            date_fin = time.strftime('%Y-%m-%d %H:%M:%S')
             loadStatusExecution(date_ini, date_fin, status)
-        
-        if status!='ERROR':
-            hora_fin = datetime.now().time()
-            date_fin= str(today)+' '+str(hora_fin)
-            status='FINISHED'
-            loadStatusExecution(date_ini, date_fin, status)
+            print("Update Status Executions")
 
+def conexion():
+    print ("---Conection Database---")
+    db = mysql.connector.connect(host="devosfernando.com",
+                                    port="9999",
+                                    user="lra", 
+                                    password="ARQ2023LRA", 
+                                    database="automation",
+                                    auth_plugin="mysql_native_password")
+    return db  
 
 def loadCookieToSqlite(nameCookie, value, date):
     try:
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        db_dir = (BASE_DIR + '\\automation.db')
-        #db_dir = ('\\\\tsclient\\G\\Otros ordenadores\\Mi PC\\Plan De Backend\\BD_Sqlite\\automation.db')
-        sqliteConnection = sqlite3.connect(db_dir)
-        cursor = sqliteConnection.cursor()
-        print("Connected to SQLite")
+        conn = conexion()
+        cursor = conn.cursor()       
+        print("Connected to BD")
 
-        sqlite_insert = """INSERT INTO COOKIE
-                            (NAME, VALUE, DATE)
-                            VALUES (?, ?, ? );"""
+        sqlite_insert = ("INSERT INTO automation.cookie"
+                          "  (NAME, VALUE, DATE_CREATE)"
+                           " VALUES (%s, %s, %s ) ")
         data_tuple = (nameCookie, value, date)
         cursor.execute(sqlite_insert, data_tuple)
-        sqliteConnection.commit()
-        print("Python Variables inserted successfully into Cookie table")
-        cursor.close()
-
-    except sqlite3.Error as error:
-        print("Failed to insert Python variable into sqlite table: ", error)
+        conn.commit()
+        #sqliteConnection.commit()
+        print(cursor.rowcount, "record inserted into Cookie table")
+        #print("Python Variables inserted successfully into Cookie table")
+    except mysql.connector.Error as err: 
+        print(" ERROR: INSERT COOKIE: {}".format(err)) 
+        conn.rollback()
     finally:
-        if sqliteConnection:
-            sqliteConnection.close()
-            print("The SQLite connection is closed")
+        cursor.close() 
+        conn.close()
   
 
 def loadStatusExecution(date_ini, date_fin, status):
     try:
-        db_dir = ('./automation.db')
-        #db_dir = ('\\\\tsclient\\G\\Otros ordenadores\\Mi PC\\Plan De Backend\\BD_Sqlite\\automation.db')
-        sqliteConnection = sqlite3.connect(db_dir)
-        cursor = sqliteConnection.cursor()
-        print("Connected to SQLite")
+        conn = conexion()
+        cursor = conn.cursor()       
+        print("Connected to BD")
+
         sqlite ='';
         data_tuple ='';
+        print(str(date_ini))
         
         if(date_fin == ""):
-            sqlite = """INSERT INTO EXECUTIONS_JIRA
-                                (DATE_INI, DATE_FIN, STATUS)
-                                VALUES (?, ?, ? );"""
-            data_tuple = (date_ini, date_fin, status)                                
+            sqlite = ("INSERT INTO automation.executions_jira "
+                            " (DATE_INI, DATE_FIN, STATUS) "
+                             "   VALUES (%s,null,%s) ")
+            data_tuple = (str(date_ini), status)                                
         else:
-            sqlite = """UPDATE EXECUTIONS_JIRA 
-                                SET DATE_FIN= ?, STATUS=? 
-                                WHERE DATE_INI=?  """
-            data_tuple = (date_fin, status, date_ini)  
+            sqlite = ("UPDATE automation.executions_jira "
+                             "   SET DATE_FIN= %s, STATUS= %s "
+                              "  WHERE DATE_INI= %s  ")
+            data_tuple = (str(date_fin), status, str(date_ini))  
                                 
-        
         cursor.execute(sqlite, data_tuple)
-        sqliteConnection.commit()
+        conn.commit()
         print("Python Variables inserted successfully into executions jira table")
-        cursor.close()
-
-    except sqlite3.Error as error:
-        print("Failed to insert Python variable into sqlite table: ", error)
+    except mysql.connector.Error as err:
+        print("Failed to INSERT/UPDATE: {}".format(err))
+        conn.rollback()
     finally:
-        if sqliteConnection:
-            sqliteConnection.close()
-            print("The SQLite connection is closed")
+        cursor.close()
+        if conn:
+            conn.close()
+            print("The SQL connection is closed")
 
 def leerArchivoDll():
     with open(datosDll) as archivoPlano:
