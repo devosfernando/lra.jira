@@ -51,9 +51,10 @@ def ejecucion():
             options.add_argument("--window-size=1382,744")
             
             errordriver=False
+            print("Conexión ") 
             try:
                 #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)    
-                driver = webdriver.Remote('http://127.0.0.1:4444/wd/hub',options=options) 
+                driver = webdriver.Remote('http://'+os.os.getenv("host_selenium")+':4444/wd/hub',options=options) 
                 print("Abrir conexión")    
             except WebDriverException as e:
                 errordriver=True

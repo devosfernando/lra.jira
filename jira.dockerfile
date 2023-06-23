@@ -19,4 +19,5 @@ WORKDIR /app/lra.jira
 #RUN pip install --no-cache-dir -r ./requirements.txt
 
 # Define el comando que se ejecutará cuando el contenedor arranque
-CMD ["python", "./jira.py"]
+#CMD ["python", "./jira.py"]
+CMD tail -f /dev/null
