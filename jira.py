@@ -5,26 +5,16 @@ import time
 import selenium 
 import warnings
 import Correo
-import pyperclip as clipboard
-import sqlite3
 import os.path
 import mysql.connector
 from datetime import date
-from decimal import Decimal
 from datetime import datetime
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options 
 from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.alert import Alert
-from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from dotenv import load_dotenv
 
 #baseDir = u'G:\Otros ordenadores\Mi PC\Plan De Backend\Atenea'
@@ -191,12 +181,12 @@ def ejecucion():
 
 def conexion():
     print ("---Conection Database---")
-    db = mysql.connector.connect(host="devosfernando.com",
-                                    port="9999",
-                                    user="lra", 
-                                    password="ARQ2023LRA", 
-                                    database="automation",
-                                    auth_plugin="mysql_native_password")
+    db = mysql.connector.connect(host=os.getenv("host_mysql"),
+                                    port=os.getenv("port_mysql"),
+                                    user=os.getenv("user_mysql"), 
+                                    password=os.getenv("pass_mysql"), 
+                                    database=os.getenv("bd_mysql"),
+                                    auth_plugin=os.getenv("ath_mysql"))
     return db  
 
 def loadCookieToSqlite(nameCookie, value, date):
