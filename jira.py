@@ -51,10 +51,10 @@ def ejecucion():
             options.add_argument("--window-size=1382,744")
             
             errordriver=False
-            print("Conexión ") 
+            print("Conexión a el driver de chrome") 
             try:
                 #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)    
-                driver = webdriver.Remote('http://'+os.getenv("host_selenium")+':4444/wd/hub',options=options) 
+                driver = webdriver.Remote('http://localhost:4444/wd/hub',options=options) 
                 print("Abrir conexión")    
             except WebDriverException as e:
                 errordriver=True
@@ -170,8 +170,9 @@ def ejecucion():
             status='FINISHED'
             print("Finaliza Correctamente")
             
-        except:
+        except Exception as e:
             status='ERROR GENERAL'
+            print("Se produjo un error:", e)
             print("Error generico")
         finally:
             #hora_fin = datetime.now().time()

@@ -16,7 +16,7 @@ RUN git clone https://github.com/devosfernando/lra.jira.git
 WORKDIR /app/lra.jira
 
 # Instala las dependencias especificadas en requirements.txt
-#RUN pip install --no-cache-dir -r ./requirements.txt
+RUN pip install --no-cache-dir -r ./requirements.txt
 
 # Define el comando que se ejecutará cuando el contenedor arranque
 #CMD ["python", "./jira.py"]
