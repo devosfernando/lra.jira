@@ -54,7 +54,7 @@ def ejecucion():
             print("Conexión ") 
             try:
                 #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)    
-                driver = webdriver.Remote('http://'+os.os.getenv("host_selenium")+':4444/wd/hub',options=options) 
+                driver = webdriver.Remote('http://'+os.getenv("host_selenium")+':4444/wd/hub',options=options) 
                 print("Abrir conexión")    
             except WebDriverException as e:
                 errordriver=True
