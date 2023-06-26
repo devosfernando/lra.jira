@@ -7,6 +7,9 @@ import warnings
 import Correo
 import os.path
 import mysql.connector
+#Servicio python
+import asyncio
+from flask import Flask,jsonify,request                             # pip install flask
 from datetime import date
 from datetime import datetime
 from selenium.webdriver.support.wait import WebDriverWait
@@ -24,7 +27,21 @@ datosDll = r'datos.dll'
 # Cargar las variables de entorno del archivo .env
 load_dotenv()
 
+#Variable de entorno del servicio
+app = Flask("__name__")
+app.config['TIMEOUT']=3600
+
+@app.route('/',methods=['GET'])
+def enpoint():
+    resultado=main()
+    reponse = {
+        'message': 'Ejecución completa',
+        'status': resultado
+    }
+    return reponse
+
 def ejecucion():
+        resultado=''
         today = date.today()
         hora_ini = datetime.now().time()
         #date_ini= str(today)+' '+str(hora_ini)
@@ -43,6 +60,8 @@ def ejecucion():
             options.add_experimental_option('useAutomationExtension', False)
             options.add_argument('--remote-debugging-port=9222')
             #options.add_argument('--remote-debugging-port=5900')
+            options.add_argument('--no-sandbox') 
+            options.add_argument('--disable-dev-shm-usage')   
             prefs = {"profile.default_content_setting_values.notifications" : 2}    
             options.add_experimental_option("prefs",prefs)
         
@@ -53,8 +72,9 @@ def ejecucion():
             errordriver=False
             print("Conexión a el driver de chrome") 
             try:
-                #driver = webdriver.Chrome("C:\chromedriver.exe", options=options)    
-                driver = webdriver.Remote('http://localhost:4444/wd/hub',options=options) 
+                #driver = webdriver.Chrome("C:\chromedriver.exe", options=options) 
+                host='http://'+os.getenv("host_selenium")+':4444/wd/hub'
+                driver = webdriver.Remote(host,options=options) 
                 print("Abrir conexión")    
             except WebDriverException as e:
                 errordriver=True
@@ -144,9 +164,9 @@ def ejecucion():
                     mybtnEnviar.click()
                 
                     print("- Click para confirmar cuenta")
-                    mybtnconf = WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.XPATH, '//*[@id="view_container"]/div/div/div[2]/div/div[2]/div/div[1]/div/div/button')))
+                    mybtnconf = WebDriverWait(driver, 25).until(EC.presence_of_element_located((By.XPATH, '//*[@id="view_container"]/div/div/div[2]/div/div[2]/div/div[1]/div/div/button')))
                     mybtnconf.click()
-                    time.sleep(20)
+                    time.sleep(25)
                     print("-Obtener Cookie _oauth2_proxy")
                     cookie = driver.get_cookie("_oauth2_proxy")
                     print(cookie)
@@ -160,26 +180,32 @@ def ejecucion():
                     fecha_actual = time.strftime('%Y-%m-%d %H:%M:%S')
                     print("fecha_actual:",fecha_actual)
                     loadCookieToSqlite(nameCookie, value,str(fecha_actual))
+                    status='FINISHED'
+                    resultado='200'
+                    print("Finaliza Correctamente")
                     
             else:
                 print("Error se relanzara no cargo correctamente la pagina")
                 status='ERROR PAGINA'
+                resultado='500'
                 
             driver.close()
             driver.quit()
-            status='FINISHED'
-            print("Finaliza Correctamente")
+            print("Finaliza")
             
         except Exception as e:
             status='ERROR GENERAL'
             print("Se produjo un error:", e)
             print("Error generico")
+            return e
         finally:
             #hora_fin = datetime.now().time()
             #date_fin= str(today)+' '+str(hora_fin)
             date_fin = time.strftime('%Y-%m-%d %H:%M:%S')
             loadStatusExecution(date_ini, date_fin, status)
             print("Update Status Executions")
+            return resultado
+
 
 def conexion():
     print ("---Conection Database---")
@@ -262,12 +288,17 @@ def leerArchivoDll():
 
 
 def main():
-    ejecucion()
+    resultado='200'
+    resultado=ejecucion()
     print("- Process end succesfully")
-    time.sleep(10)
+    #time.sleep(10)
+    return resultado
 
 
-if __name__=="__main__":
+"""if __name__=="__main__":
     os.system('cls')
     print("")
-    main()
+    main()"""
+    
+if __name__=="__main__":
+    app.run(host='0.0.0.0',port=os.getenv("port_serv"))    

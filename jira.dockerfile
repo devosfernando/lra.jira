@@ -16,8 +16,12 @@ RUN git clone https://github.com/devosfernando/lra.jira.git
 WORKDIR /app/lra.jira
 
 # Instala las dependencias especificadas en requirements.txt
-RUN pip install --no-cache-dir -r ./requirements.txt
-
+#RUN pip install --no-cache-dir -r ./requirements.txt
+RUN pip install selenium
+RUN pip install mysql-connector
+RUN pip install webdriver-manager
+RUN apk add nano
+RUN apk add curl
 # Define el comando que se ejecutará cuando el contenedor arranque
-#CMD ["python", "./jira.py"]
-CMD tail -f /dev/null
+CMD ["python", "./jira.py"]
+#CMD tail -f /dev/null
